@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brian's Cipher">
+<meta name="theme-color" content="#060e1f">
+<title>Brian's Cipher Generator v1.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg:           #060e1f;
+    --surface:      #0c1730;
+    --surface2:     #112040;
+    --surface3:     #162850;
+    --accent:       #4db8ff;
+    --accent-dim:   #1e7ab8;
+    --accent-glow:  rgba(77,184,255,0.12);
+    --accent-bright:#80ccff;
+    --text:         #e8f4ff;
+    --text-dim:     #88b4d8;
+    --text-muted:   #3a5878;
+    --border:       rgba(77,184,255,0.15);
+    --border-bright:rgba(77,184,255,0.38);
+    --green:        #4de8b0;
+    --gold:         #c0392b;
+    --gold-glow:    rgba(192,57,43,0.12);
+    --gold-border:  rgba(192,57,43,0.38);
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(77,184,255,0.07) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app::after {
+    content: '';
+    position: fixed;
+    top: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 200px;
+    background: radial-gradient(ellipse, rgba(77,184,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .header {
+    position: relative;
+    z-index: 10;
+    padding: env(safe-area-inset-top, 48px) 20px 0;
+    background: var(--bg);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0 14px;
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    perspective: 200px;
+  }
+
+  .logo-flipper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: logoFlip 8s ease-in-out infinite;
+    animation-delay: 3s;
+  }
+
+  @keyframes logoFlip {
+    0%   { transform: rotateY(0deg); }
+    8%   { transform: rotateY(90deg); }
+    16%  { transform: rotateY(180deg); }
+    50%  { transform: rotateY(180deg); }
+    58%  { transform: rotateY(270deg); }
+    66%  { transform: rotateY(360deg); }
+    100% { transform: rotateY(360deg); }
+  }
+
+  .logo-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border-bright);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 12px rgba(77,184,255,0.15);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .logo-face.back {
+    transform: rotateY(180deg);
+    background: var(--surface2);
+    border-color: var(--border-bright);
+    box-shadow: 0 0 12px rgba(77,184,255,0.15);
+  }
+
+  .logo-face svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .logo-face.back svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  /* keep old .logo svg rule harmless */
+  .logo svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .header-text h1 {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+  }
+
+  .header-text p {
+    font-size: 10px;
+    color: var(--accent-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+    font-family: var(--mono);
+  }
+
+  .tabs {
+    display: flex;
+    margin: 12px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    transition: color .2s, background .2s, box-shadow .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    user-select: none;
+  }
+
+  .tab svg {
+    width: 14px; height: 14px;
+    stroke: currentColor; fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  .tab.active {
+    background: var(--surface2);
+    color: var(--accent-bright);
+    border: 1px solid var(--border-bright);
+    box-shadow: 0 0 10px rgba(77,184,255,0.1);
+  }
+
+  .scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    z-index: 5;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  .panel { display: none; padding: 18px 20px 0; }
+  .panel.active { display: block; }
+
+  .field { margin-bottom: 16px; }
+
+  .field-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .field-label::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 5px var(--accent);
+  }
+
+  .field-label:has(.status-dot)::before {
+    display: none;
+  }
+
+  .result-block-label:has(.status-dot)::before {
+    display: none;
+  }
+
+  @keyframes statusPulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px currentColor; }
+    50%       { opacity: 0.1; box-shadow: 0 0 1px currentColor; }
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-dot.red {
+    background: #c0392b;
+    box-shadow: 0 0 5px #c0392b;
+  }
+
+  .status-dot.green {
+    background: var(--green);
+    box-shadow: 0 0 5px var(--green);
+    animation: statusPulse 2s ease-in-out infinite;
+  }
+
+  .field-label.gold-label::before {
+    background: var(--gold);
+    box-shadow: 0 0 5px rgba(192,57,43,0.7);
+  }
+
+  .field-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    -webkit-appearance: none;
+    appearance: none;
+    letter-spacing: 0.04em;
+  }
+
+  .field-input::placeholder {
+    color: var(--text-muted);
+    font-size: 13px;
+    letter-spacing: 0;
+  }
+
+  .field-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow), 0 0 16px rgba(77,184,255,0.08);
+  }
+
+  .grid-wrap { margin-bottom: 16px; }
+
+  .grid-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .grid-table td {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    width: 16.66%;
+    padding: 11px 0;
+    border: 1px solid rgba(77,184,255,0.08);
+    color: var(--text-dim);
+    transition: background .2s, color .2s;
+  }
+
+  .grid-table td.kw {
+    background: rgba(77,184,255,0.1);
+    color: var(--accent-bright);
+    font-weight: 600;
+    text-shadow: 0 0 8px rgba(77,184,255,0.4);
+  }
+
+  .result-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+
+  .result-block.gold-block {
+    background: rgba(192,57,43,0.05);
+    border-color: var(--gold-border);
+  }
+
+  .result-block-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .result-block-label::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 5px var(--green);
+  }
+
+  .result-block-label.gold-label::before {
+    background: var(--gold);
+    box-shadow: 0 0 5px rgba(192,57,43,0.7);
+  }
+
+  .digrams-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 28px;
+  }
+
+  .digram-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    animation: popIn .12s ease;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(.82); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  .result-text {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--green);
+    word-break: break-all;
+    letter-spacing: 0.08em;
+    min-height: 28px;
+    line-height: 1.5;
+    text-shadow: 0 0 12px rgba(77,232,176,0.25);
+  }
+
+  .result-text.gold-text {
+    color: var(--gold);
+    text-shadow: 0 0 14px rgba(192,57,43,0.4);
+  }
+
+  .result-text.empty {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-shadow: none;
+  }
+
+  .copy-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+  }
+
+  .char-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: background .15s, transform .1s, box-shadow .15s;
+    -webkit-appearance: none;
+  }
+
+  .copy-btn.gold-btn {
+    color: var(--gold);
+    border-color: var(--gold-border);
+    background: rgba(192,57,43,0.07);
+  }
+
+  .copy-btn:active { transform: scale(.95); }
+
+  .copy-btn svg {
+    width: 13px; height: 13px;
+    stroke: currentColor; fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .copy-btn.copied { color: var(--green); border-color: rgba(77,232,176,0.4); }
+  .copy-btn.gold-btn.copied { color: var(--green); border-color: rgba(77,232,176,0.4); background: var(--surface2); }
+
+  .pw-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--sans);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .rules {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-dim);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 24px;
+  }
+
+  .rules p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    font-family: var(--sans);
+  }
+
+  .rules p + p { margin-top: 6px; }
+
+  .sensitive-blur {
+    transition: filter .4s ease;
+  }
+
+  .app-blurred .sensitive-blur {
+    filter: blur(6px);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .blur-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(6,14,31,0.6);
+    backdrop-filter: blur(2px);
+  }
+
+  .app-blurred .blur-overlay {
+    display: flex;
+  }
+
+  .blur-msg {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .blur-msg-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .field-blur-wrap {
+    position: relative;
+  }
+
+  .field-blur-wrap .field-input,
+  .field-blur-wrap .paste-btn {
+    transition: filter .25s ease;
+  }
+
+  .field-blur-wrap.is-blurred .field-input,
+  .field-blur-wrap.is-blurred .paste-btn {
+    filter: blur(4px);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .field-blur-wrap.is-blurred .kw-clear,
+  .field-blur-wrap.is-blurred .clear-btn {
+    filter: none !important;
+    pointer-events: auto !important;
+    z-index: 10;
+  }
+
+  .pw-checks {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(192,57,43,0.2);
+  }
+
+  .pw-checks.visible {
+    display: flex;
+  }
+
+  .pw-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .pw-check-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 700;
+    transition: background .3s, box-shadow .3s;
+  }
+
+  .pw-check-icon.pass {
+    background: var(--green);
+    box-shadow: 0 0 6px rgba(77,232,176,0.5);
+    color: #0a1a10;
+  }
+
+  .pw-check-icon.fail {
+    background: var(--surface3);
+    border: 1px solid rgba(192,57,43,0.4);
+    color: #c0392b;
+  }
+
+  .pw-check.pass {
+    color: var(--text-dim);
+  }
+
+  .placeholder-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: var(--sans);
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .input-wrap .field-input {
+    padding-right: 52px;
+  }
+
+  /* paste-btn positioned via input-btns container for textareas */
+
+  .paste-btn {
+    position: absolute;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    background: var(--surface3);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: background .15s, transform .1s;
+    -webkit-appearance: none;
+    white-space: nowrap;
+  }
+
+  .paste-btn:active { transform: scale(.95); }
+
+  .paste-btn svg {
+    width: 12px; height: 12px;
+    stroke: currentColor; fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .paste-btn.pasted {
+    color: var(--green);
+    border-color: rgba(77,232,176,0.4);
+  }
+
+  .input-btns {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 8px;
+    box-sizing: border-box;
+  }
+
+  .clear-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--surface3);
+    border: 1px solid rgba(192,57,43,0.4);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    -webkit-appearance: none;
+    flex-shrink: 0;
+  }
+
+  .clear-btn:active { transform: scale(.92); }
+
+  .clear-btn svg {
+    width: 13px; height: 13px;
+    stroke: #c0392b;
+    fill: none;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+  }
+
+  .input-wrap .clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    margin-top: -14px;
+  }
+
+  .input-wrap .clear-btn:active {
+    transform: scale(.92);
+  }
+
+  /* keyword field wrapper — clear btn sits outside blur layer */
+  .kw-wrap {
+    position: relative;
+  }
+
+  .kw-wrap .field-input {
+    width: 100%;
+    padding-right: 44px;
+  }
+
+  .kw-wrap .kw-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    margin-top: -14px;
+    z-index: 10;
+  }
+
+  .kw-wrap .kw-clear:active {
+    transform: scale(.92);
+  }
+
+  .input-wrap .field-input {
+    padding-right: 44px;
+  }
+
+  /* ── Timer bar ── */
+  .timer-bar {
+    position: relative;
+    z-index: 10;
+    margin: 0 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 14px;
+    transition: opacity .3s, max-height .3s;
+    max-height: 60px;
+    overflow: hidden;
+  }
+
+  .timer-bar.hidden {
+    max-height: 0;
+    padding: 0 14px;
+    border: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .timer-bar.warning .timer-count {
+    color: #e74c3c;
+    animation: pulse 1s infinite;
+  }
+
+  .timer-bar.warning .timer-fill {
+    background: #e74c3c;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .timer-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .timer-icon {
+    width: 14px; height: 14px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  .timer-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .timer-count {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 22px;
+    text-align: center;
+    transition: color .3s;
+  }
+
+  .timer-track {
+    flex: 1;
+    height: 3px;
+    background: var(--surface3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .timer-fill {
+    height: 100%;
+    width: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 1s linear, background .3s;
+    transform-origin: left;
+  }
+
+  .timer-reset-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 9px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    -webkit-appearance: none;
+    white-space: nowrap;
+    transition: color .15s, border-color .15s;
+  }
+
+  .timer-reset-btn:active { transform: scale(.94); }
+
+  /* ── Cleared toast ── */
+  .cleared-toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    z-index: 100;
+    background: var(--surface2);
+    border: 1px solid rgba(77,232,176,0.4);
+    border-radius: 12px;
+    padding: 16px 28px;
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transition: opacity .4s, transform .4s;
+  }
+
+  .cleared-toast svg {
+    width: 18px; height: 18px;
+    stroke: var(--green);
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cleared-toast.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="blur-overlay">
+    <svg style="width:28px;height:28px;stroke:var(--accent);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <span class="blur-msg">Session paused</span>
+    <span class="blur-msg-sub">Return to app to continue</span>
+  </div>
+  <div class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-flipper">
+          <!-- Front: lock -->
+          <div class="logo-face front">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <!-- Back: binoculars -->
+          <div class="logo-face back">
+            <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3" fill="var(--accent)" stroke="var(--surface3)" stroke-width="1.2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="header-text">
+        <h1 id="cipher-title" aria-label="Brian's Cipher Generator v1.0"></h1>
+        <p>Playfair–Wheatstone · 6×6</p>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <div class="tab active" role="tab" aria-selected="true" onclick="switchTab('encrypt')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Encrypt
+      </div>
+      <div class="tab" role="tab" aria-selected="false" onclick="switchTab('decrypt')">
+        <svg viewBox="-4 0 26 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M9 11V8 Q9 2 4 2 Q-3 2 -3 7 L-3 11" fill="none" stroke-linecap="round" stroke-width="1.6"/></svg>
+        Decrypt
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMER BAR -->
+  <div id="timer-bar" class="timer-bar hidden">
+    <div class="timer-bar-inner">
+      <svg class="timer-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+      <span class="timer-label">Auto-clear in</span>
+      <span id="timer-count" class="timer-count">60</span>
+      <span class="timer-label">sec</span>
+      <div class="timer-track"><div id="timer-fill" class="timer-fill"></div></div>
+      <button class="timer-reset-btn" onclick="resetTimer()" aria-label="Reset timer">Reset</button>
+    </div>
+  </div>
+
+  <!-- CLEARED TOAST -->
+  <div id="cleared-toast" class="cleared-toast hidden">
+    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    Cleared
+  </div>
+
+  <!-- iPhone Duo right-side rail (hidden on regular iPhones via CSS) -->
+  <div class="duo-rail" style="display:none;">
+    <div class="duo-tab active" id="duo-tab-encrypt" onclick="switchTab('encrypt')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Lock
+    </div>
+    <div class="duo-tab" id="duo-tab-decrypt" onclick="switchTab('decrypt')">
+<svg viewBox="-4 0 26 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M9 11V8 Q9 2 4 2 Q0 2 0 7 L0 11" fill="none" stroke-linecap="round" stroke-width="1.6"/></svg>
+      Open
+    </div>
+  </div>
+
+  <div class="scroll">
+
+    <!-- ENCRYPT -->
+    <div class="panel active" id="panel-encrypt">
+      <div class="field sensitive-blur field-blur-wrap" id="wrap-enc-keyword">
+        <div class="field-label"><span class="status-dot red" id="dot-enc-keyword"></span>Keyword</div>
+        <div class="kw-wrap">
+          <input class="field-input" type="text" id="enc-keyword"
+            placeholder="e.g. SECRETKEY" maxlength="36"
+            autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+            oninput="this.value=this.value.toUpperCase();updateEncrypt()">
+          <button class="clear-btn kw-clear" onclick="clearField('enc-keyword','encrypt')" aria-label="Clear keyword"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+      </div>
+      <div class="field sensitive-blur field-blur-wrap" id="wrap-enc-text">
+        <div class="field-label"><span class="status-dot red" id="dot-enc-text"></span>Plaintext</div>
+        <div class="input-wrap">
+          <textarea class="field-input field-textarea" id="enc-text"
+            placeholder="Text to encode"
+            autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+            oninput="this.value=this.value.toUpperCase();updateEncrypt()" rows="4"></textarea>
+          <div class="input-btns">
+            <button class="paste-btn" id="paste-btn" onclick="pasteText()">
+              <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+              Paste
+            </button>
+            <button class="clear-btn" onclick="clearField('enc-text','encrypt')" aria-label="Clear plaintext"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="grid-wrap">
+        <div class="field-label"><span class="status-dot red" id="dot-enc-grid"></span>6×6 Keyword Grid</div>
+        <table class="grid-table" id="enc-grid"></table>
+      </div>
+      <div class="result-block">
+        <div class="result-block-label"><span class="status-dot red" id="dot-enc-digrams"></span>Digrams</div>
+        <div class="digrams-wrap" id="enc-digrams">
+          <span class="placeholder-text">Enter text to see digrams…</span>
+        </div>
+      </div>
+      <div class="result-block sensitive-blur">
+        <div class="result-block-label"><span class="status-dot red" id="dot-enc-result"></span>Encoded Text</div>
+        <div class="result-text empty" id="enc-result">Enter plaintext to encode</div>
+        <div class="copy-row">
+          <span class="char-count" id="enc-count"></span>
+          <button class="copy-btn" id="enc-copy-btn" onclick="copyText('enc-result','enc-copy-btn',false)">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- PASSWORD FIELD -->
+      <div class="result-block gold-block sensitive-blur">
+        <div class="result-block-label gold-label"><span class="status-dot red" id="dot-enc-password"></span>Password to Enter</div>
+        <div class="result-text gold-text empty" id="enc-password">—</div>
+        <div class="copy-row">
+          <span class="char-count" id="pw-count"></span>
+          <button class="copy-btn gold-btn" id="pw-copy-btn" onclick="copyText('enc-password','pw-copy-btn',true)">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <div class="pw-checks" id="pw-checks">
+          <div class="pw-check" id="pwc-length">
+            <div class="pw-check-icon fail" id="pwci-length">✕</div>
+            <span>At least 8 characters</span>
+          </div>
+          <div class="pw-check" id="pwc-upper">
+            <div class="pw-check-icon fail" id="pwci-upper">✕</div>
+            <span>At least 1 uppercase letter</span>
+          </div>
+          <div class="pw-check" id="pwc-lower">
+            <div class="pw-check-icon fail" id="pwci-lower">✕</div>
+            <span>At least 1 lowercase letter</span>
+          </div>
+          <div class="pw-check" id="pwc-number">
+            <div class="pw-check-icon fail" id="pwci-number">✕</div>
+            <span>At least 1 number</span>
+          </div>
+          <div class="pw-check" id="pwc-special">
+            <div class="pw-check-icon fail" id="pwci-special">✕</div>
+            <span>At least 1 special character (!)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rules">
+        <p>A–Z and 0–9 only · spaces &amp; punctuation removed · repeated letters in a pair get X inserted · odd final character padded with X</p>
+      </div>
+    </div>
+
+    <!-- DECRYPT -->
+    <div class="panel" id="panel-decrypt">
+      <div class="field sensitive-blur field-blur-wrap" id="wrap-dec-keyword">
+        <div class="field-label"><span class="status-dot red" id="dot-dec-keyword"></span>Keyword</div>
+        <div class="kw-wrap">
+          <input class="field-input" type="text" id="dec-keyword"
+            placeholder="e.g. SECRETKEY" maxlength="36"
+            autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+            oninput="this.value=this.value.toUpperCase();updateDecrypt()">
+          <button class="clear-btn kw-clear" onclick="clearField('dec-keyword','decrypt')" aria-label="Clear keyword"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+      </div>
+      <div class="field sensitive-blur">
+        <div class="field-label"><span class="status-dot red" id="dot-dec-text"></span>Ciphertext</div>
+        <div class="input-wrap">
+          <textarea class="field-input field-textarea" id="dec-text"
+            placeholder="Encoded text to decode"
+            autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+            oninput="this.value=this.value.toUpperCase();updateDecrypt()" rows="4"></textarea>
+          <div class="input-btns">
+            <button class="paste-btn" id="dec-paste-btn" onclick="pasteDecText()">
+              <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+              Paste
+            </button>
+            <button class="clear-btn" onclick="clearField('dec-text','decrypt')" aria-label="Clear ciphertext"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="grid-wrap">
+        <div class="field-label"><span class="status-dot red" id="dot-dec-grid"></span>6×6 Keyword Grid</div>
+        <table class="grid-table" id="dec-grid"></table>
+      </div>
+      <div class="result-block">
+        <div class="result-block-label"><span class="status-dot red" id="dot-dec-digrams"></span>Ciphertext Digrams</div>
+        <div class="digrams-wrap" id="dec-digrams">
+          <span class="placeholder-text">Enter ciphertext to see digrams…</span>
+        </div>
+      </div>
+      <div class="result-block sensitive-blur">
+        <div class="result-block-label"><span class="status-dot red" id="dot-dec-result"></span>Decoded Text</div>
+        <div class="result-text empty" id="dec-result">Enter ciphertext to decode</div>
+        <div class="copy-row">
+          <span class="char-count" id="dec-count"></span>
+          <button class="copy-btn" id="dec-copy-btn" onclick="copyText('dec-result','dec-copy-btn',false)">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+      <div class="rules">
+        <p>Decoded output preserves any filler X values added during encryption for repeated letters or odd-length text.</p>
+        <p>A–Z and 0–9 only · ciphertext read in sequential digrams.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+function buildGrid(keyword) {
+  const kw = (keyword||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const seen = new Set(), grid = [];
+  for (const c of kw) { if (!seen.has(c)) { seen.add(c); grid.push(c); } }
+  for (const c of CHARSET) { if (!seen.has(c)) { seen.add(c); grid.push(c); } }
+  return grid;
+}
+
+function renderGrid(id, grid, keyword) {
+  const kw = new Set((keyword||'').toUpperCase().replace(/[^A-Z0-9]/g,''));
+  let html = '';
+  for (let r=0;r<6;r++) {
+    html += '<tr>';
+    for (let c=0;c<6;c++) {
+      const ch = grid[r*6+c];
+      html += `<td class="${kw.has(ch)?'kw':''}">${ch}</td>`;
+    }
+    html += '</tr>';
+  }
+  document.getElementById(id).innerHTML = html;
+}
+
+function pos(grid,ch) { const i=grid.indexOf(ch); return [Math.floor(i/6),i%6]; }
+
+function encDig(grid,a,b) {
+  const [r1,c1]=pos(grid,a),[r2,c2]=pos(grid,b);
+  if(r1===r2) return grid[r1*6+(c1+1)%6]+grid[r2*6+(c2+1)%6];
+  if(c1===c2) return grid[((r1+1)%6)*6+c1]+grid[((r2+1)%6)*6+c2];
+  return grid[r1*6+c2]+grid[r2*6+c1];
+}
+
+function decDig(grid,a,b) {
+  const [r1,c1]=pos(grid,a),[r2,c2]=pos(grid,b);
+  if(r1===r2) return grid[r1*6+(c1+5)%6]+grid[r2*6+(c2+5)%6];
+  if(c1===c2) return grid[((r1+5)%6)*6+c1]+grid[((r2+5)%6)*6+c2];
+  return grid[r1*6+c2]+grid[r2*6+c1];
+}
+
+function clean(raw) { return raw.toUpperCase().replace(/[^A-Z0-9]/g,''); }
+
+function makeEncPairs(text) {
+  let t='', i=0;
+  while(i<text.length) {
+    const a=text[i], b=text[i+1];
+    if(!b){t+=a;break;}
+    if(a===b){t+=a+'X';i++;}
+    else{t+=a+b;i+=2;}
+  }
+  if(t.length%2!==0) t+='X';
+  const p=[];
+  for(let j=0;j<t.length;j+=2) p.push(t[j]+t[j+1]);
+  return p;
+}
+
+function makeDecPairs(text) {
+  let t=text; if(t.length%2!==0) t+='X';
+  const p=[];
+  for(let i=0;i<t.length;i+=2) p.push(t[i]+t[i+1]);
+  return p;
+}
+
+// Password format: all lowercase, first A-Z letter capitalized, append !
+function toPassword(encoded) {
+  if (!encoded) return '';
+  const lower = encoded.toLowerCase();
+  // Find index of first letter (a-z)
+  const firstLetterIdx = lower.split('').findIndex(c => c >= 'a' && c <= 'z');
+  if (firstLetterIdx === -1) {
+    // No letters, just digits — append ! only
+    return lower + '!';
+  }
+  return lower.slice(0, firstLetterIdx)
+    + lower[firstLetterIdx].toUpperCase()
+    + lower.slice(firstLetterIdx + 1)
+    + '!';
+}
+
+function updateEncrypt() {
+  const kw=document.getElementById('enc-keyword').value;
+  const txt=document.getElementById('enc-text').value;
+  const grid=buildGrid(kw);
+  renderGrid('enc-grid',grid,kw);
+  const c=clean(txt);
+  if(!c){
+    document.getElementById('enc-digrams').innerHTML='<span class="placeholder-text">Enter text to see digrams…</span>';
+    const r=document.getElementById('enc-result'); r.textContent='Enter plaintext to encode'; r.className='result-text empty';
+    document.getElementById('enc-count').textContent='';
+    const pw=document.getElementById('enc-password'); pw.textContent='—'; pw.className='result-text gold-text empty';
+    document.getElementById('pw-count').textContent='';
+    updatePwChecks('');
+    return;
+  }
+  const pairs=makeEncPairs(c);
+  const enc=pairs.map(p=>encDig(grid,p[0],p[1]));
+  document.getElementById('enc-digrams').innerHTML=pairs.map(p=>`<span class="digram-pill">${p}</span>`).join('');
+  const result=enc.join('');
+  const r=document.getElementById('enc-result'); r.textContent=result; r.className='result-text';
+  document.getElementById('enc-count').textContent=result.length+' chars';
+  // Password
+  const password = toPassword(result);
+  const pw=document.getElementById('enc-password'); pw.textContent=password; pw.className='result-text gold-text';
+  document.getElementById('pw-count').textContent=password.length+' chars';
+  updatePwChecks(password);
+}
+
+function updateDecrypt() {
+  const kw=document.getElementById('dec-keyword').value;
+  const txt=document.getElementById('dec-text').value;
+  const grid=buildGrid(kw);
+  renderGrid('dec-grid',grid,kw);
+  const c=clean(txt);
+  if(!c){
+    document.getElementById('dec-digrams').innerHTML='<span class="placeholder-text">Enter ciphertext to see digrams…</span>';
+    const r=document.getElementById('dec-result'); r.textContent='Enter ciphertext to decode'; r.className='result-text empty';
+    document.getElementById('dec-count').textContent=''; return;
+  }
+  const pairs=makeDecPairs(c);
+  const dec=pairs.map(p=>decDig(grid,p[0],p[1]));
+  document.getElementById('dec-digrams').innerHTML=pairs.map(p=>`<span class="digram-pill">${p}</span>`).join('');
+  const result=dec.join('');
+  const r=document.getElementById('dec-result'); r.textContent=result; r.className='result-text';
+  document.getElementById('dec-count').textContent=result.length+' chars';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const a=(tab==='encrypt'&&i===0)||(tab==='decrypt'&&i===1);
+    t.classList.toggle('active',a); t.setAttribute('aria-selected',a);
+  });
+  // Sync duo rail tabs
+  const de = document.getElementById('duo-tab-encrypt');
+  const dd = document.getElementById('duo-tab-decrypt');
+  if (de && dd) {
+    de.classList.toggle('active', tab==='encrypt');
+    dd.classList.toggle('active', tab==='decrypt');
+  }
+  document.getElementById('panel-encrypt').classList.toggle('active',tab==='encrypt');
+  document.getElementById('panel-decrypt').classList.toggle('active',tab==='decrypt');
+  document.querySelector('.scroll').scrollTop=0;
+}
+
+function copyText(rid, bid, isGold) {
+  const el=document.getElementById(rid);
+  if(!el||el.className.includes('empty')) return;
+  const btn=document.getElementById(bid);
+  navigator.clipboard.writeText(el.textContent).then(()=>{
+    btn.classList.add('copied');
+    btn.innerHTML=`<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Copied`;
+    setTimeout(()=>{
+      btn.classList.remove('copied');
+      if(isGold) btn.classList.add('gold-btn');
+      btn.innerHTML=`<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+    },1800);
+  }).catch(()=>{});
+}
+
+function clearField(id, tab) {
+  const el = document.getElementById(id);
+  el.value = '';
+  if (tab === 'encrypt') updateEncrypt();
+  else updateDecrypt();
+  el.focus();
+  checkTimer();
+}
+
+async function pasteText() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const input = document.getElementById('enc-text');
+    input.value = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    updateEncrypt();
+    const btn = document.getElementById('paste-btn');
+    btn.classList.add('pasted');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Pasted`;
+    setTimeout(() => {
+      btn.classList.remove('pasted');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Paste`;
+    }, 1800);
+  } catch(e) {
+    // Clipboard permission denied — prompt user
+    const input = document.getElementById('enc-text');
+    input.focus();
+  }
+}
+
+async function pasteDecText() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const input = document.getElementById('dec-text');
+    input.value = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    updateDecrypt();
+    const btn = document.getElementById('dec-paste-btn');
+    btn.classList.add('pasted');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Pasted`;
+    setTimeout(() => {
+      btn.classList.remove('pasted');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Paste`;
+    }, 1800);
+  } catch(e) {
+    document.getElementById('dec-text').focus();
+  }
+}
+
+function updatePwChecks(pw) {
+  var checks = document.getElementById('pw-checks');
+  if (!pw || pw === '—') {
+    checks.classList.remove('visible');
+    return;
+  }
+  checks.classList.add('visible');
+
+  var rules = [
+    { id: 'length',  pass: pw.length >= 8 },
+    { id: 'upper',   pass: /[A-Z]/.test(pw) },
+    { id: 'lower',   pass: /[a-z]/.test(pw) },
+    { id: 'number',  pass: /[0-9]/.test(pw) },
+    { id: 'special', pass: /[^A-Za-z0-9]/.test(pw) },
+  ];
+
+  rules.forEach(function(r) {
+    var row  = document.getElementById('pwc-' + r.id);
+    var icon = document.getElementById('pwci-' + r.id);
+    if (r.pass) {
+      row.classList.add('pass');
+      icon.classList.remove('fail');
+      icon.classList.add('pass');
+      icon.textContent = '✓';
+    } else {
+      row.classList.remove('pass');
+      icon.classList.remove('pass');
+      icon.classList.add('fail');
+      icon.textContent = '✕';
+    }
+  });
+}
+
+renderGrid('enc-grid',buildGrid(''),'')
+
+renderGrid('dec-grid',buildGrid(''),'');
+
+// ── Auto-clear timer (wall-clock based) ──
+const TIMER_DURATION = 60;
+let timerInterval = null;
+let timerStartTime = null; // real timestamp when timer started
+let timerActive = false;
+
+function startTimer() {
+  timerStartTime = Date.now();
+  if (timerInterval) clearInterval(timerInterval);
+  timerActive = true;
+  const bar = document.getElementById('timer-bar');
+  bar.classList.remove('hidden', 'warning');
+  updateTimerDisplay();
+  timerInterval = setInterval(tickTimer, 500);
+}
+
+function tickTimer() {
+  if (!timerStartTime) return;
+  const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+  const remaining = TIMER_DURATION - elapsed;
+  const bar = document.getElementById('timer-bar');
+  if (remaining <= 0) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerActive = false;
+    timerStartTime = null;
+    clearAll();
+  } else {
+    if (remaining <= 20) bar.classList.add('warning');
+    else bar.classList.remove('warning');
+    updateTimerDisplay(remaining);
+  }
+}
+
+function resetTimer() {
+  if (timerActive) startTimer();
+}
+
+function updateTimerDisplay(remaining) {
+  if (remaining === undefined) remaining = TIMER_DURATION;
+  document.getElementById('timer-count').textContent = remaining;
+  const pct = (remaining / TIMER_DURATION) * 100;
+  document.getElementById('timer-fill').style.width = pct + '%';
+}
+
+// When app regains focus, check wall clock to see if timer should have fired
+function checkTimerOnResume() {
+  if (!timerActive || !timerStartTime) return;
+  const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+  if (elapsed >= TIMER_DURATION) {
+    // Time's up — clear immediately
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    timerActive = false;
+    timerStartTime = null;
+    clearAll();
+  } else {
+    // Resume from correct remaining time
+    tickTimer();
+  }
+}
+
+function clearAll() {
+  // Clear all fields
+  ['enc-keyword','enc-text','dec-keyword','dec-text'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  updateEncrypt();
+  updateDecrypt();
+
+  // Hide timer bar
+  const bar = document.getElementById('timer-bar');
+  bar.classList.add('hidden');
+  bar.classList.remove('warning');
+  timerActive = false;
+
+  // No data left — remove blur if active
+  unblurApp();
+
+  // Remove field blurs
+  if (window.clearAllFieldBlurs) window.clearAllFieldBlurs();
+
+  // Scroll back to top
+  setTimeout(function() {
+    document.querySelector('.scroll').scrollTop = 0;
+    window.scrollTo(0, 0);
+  }, 100);
+
+  // Show cleared toast
+  const toast = document.getElementById('cleared-toast');
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 2000);
+}
+
+// Hook into input events to start/reset timer, or stop if all fields empty
+function checkTimer() {
+  const allEmpty = ['enc-keyword','enc-text','dec-keyword','dec-text'].every(id => {
+    const el = document.getElementById(id);
+    return !el || el.value.trim().length === 0;
+  });
+  if (allEmpty) {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    timerActive = false;
+    const bar = document.getElementById('timer-bar');
+    bar.classList.add('hidden');
+    bar.classList.remove('warning');
+  } else {
+    startTimer();
+  }
+}
+
+['enc-keyword','enc-text','dec-keyword','dec-text'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => checkTimer());
+});
+
+// ── Status dot indicators ──
+var pulsePhase = 0; // shared phase for all green dots
+
+function setDot(id, state) {
+  var dot = document.getElementById(id);
+  if (!dot) return;
+  dot.className = 'status-dot ' + state;
+}
+
+function updateStatusDots() {
+  var encKw  = (document.getElementById('enc-keyword') || {}).value || '';
+  var encTxt = (document.getElementById('enc-text')    || {}).value || '';
+  var decKw  = (document.getElementById('dec-keyword') || {}).value || '';
+  var decTxt = (document.getElementById('dec-text')    || {}).value || '';
+
+  var encKwHas  = encKw.trim().length  > 0;
+  var encTxtHas = encTxt.trim().length > 0;
+  var decKwHas  = decKw.trim().length  > 0;
+  var decTxtHas = decTxt.trim().length > 0;
+
+  // Encrypt tab
+  setDot('dot-enc-keyword',  encKwHas  ? 'green' : 'red');
+  setDot('dot-enc-text',     encTxtHas ? 'green' : 'red');
+  var encBoth = encKwHas && encTxtHas;
+  setDot('dot-enc-grid',     encBoth ? 'green' : 'red');
+  setDot('dot-enc-digrams',  encBoth ? 'green' : 'red');
+  setDot('dot-enc-result',   encBoth ? 'green' : 'red');
+  setDot('dot-enc-password', encBoth ? 'green' : 'red');
+
+  // Decrypt tab
+  setDot('dot-dec-keyword',  decKwHas  ? 'green' : 'red');
+  setDot('dot-dec-text',     decTxtHas ? 'green' : 'red');
+  var decBoth = decKwHas && decTxtHas;
+  setDot('dot-dec-grid',     decBoth ? 'green' : 'red');
+  setDot('dot-dec-digrams',  decBoth ? 'green' : 'red');
+  setDot('dot-dec-result',   decBoth ? 'green' : 'red');
+}
+
+// Sync all green dot animations to the same phase
+// by restarting their animation at the same time
+function syncDotAnimations() {
+  document.querySelectorAll('.status-dot.green').forEach(function(dot) {
+    dot.style.animation = 'none';
+    dot.offsetHeight; // reflow
+    dot.style.animation = '';
+  });
+}
+
+// Hook into updateEncrypt and updateDecrypt to refresh dots
+var _origUpdateEncrypt = updateEncrypt;
+updateEncrypt = function() { _origUpdateEncrypt.apply(this, arguments); updateStatusDots(); };
+
+var _origUpdateDecrypt = updateDecrypt;
+updateDecrypt = function() { _origUpdateDecrypt.apply(this, arguments); updateStatusDots(); };
+
+// Sync animations every 2s so they stay in phase
+setInterval(syncDotAnimations, 2000);
+
+// Initial state
+updateStatusDots();
+
+// ── Field-level blur when not focused ──
+(function() {
+  var fieldBlurs = [
+    { inputId: 'enc-keyword', wrapId: 'wrap-enc-keyword' },
+    { inputId: 'enc-text',    wrapId: 'wrap-enc-text'    },
+    { inputId: 'dec-keyword', wrapId: 'wrap-dec-keyword' },
+  ];
+
+  fieldBlurs.forEach(function(f) {
+    var input = document.getElementById(f.inputId);
+    var wrap  = document.getElementById(f.wrapId);
+    if (!input || !wrap) return;
+
+    // Blur the field when it loses focus, only if it has content
+    input.addEventListener('blur', function() {
+      if (input.value.trim().length > 0) {
+        wrap.classList.add('is-blurred');
+      }
+    });
+
+    // Unblur when focused
+    input.addEventListener('focus', function() {
+      wrap.classList.remove('is-blurred');
+    });
+
+    // Clicking the wrap area also unblurs and focuses
+    wrap.addEventListener('click', function() {
+      wrap.classList.remove('is-blurred');
+      input.focus();
+    });
+  });
+
+  // Blur active field when user scrolls away
+  var scrollEl = document.querySelector('.scroll');
+  var scrollTimer = null;
+  scrollEl.addEventListener('scroll', function() {
+    // Small debounce so it doesn't fire on tiny accidental scrolls
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function() {
+      fieldBlurs.forEach(function(f) {
+        var input = document.getElementById(f.inputId);
+        var wrap  = document.getElementById(f.wrapId);
+        if (!input || !wrap) return;
+        // If this field is currently focused, blur it
+        if (document.activeElement === input) {
+          input.blur();
+        }
+        // If it has content, apply the visual blur
+        if (input.value.trim().length > 0) {
+          wrap.classList.add('is-blurred');
+        }
+      });
+    }, 150);
+  });
+
+  // Also unblur all fields when clearAll fires — no content, no blur needed
+  var origClearAll = window.clearAllFieldBlurs = function() {
+    fieldBlurs.forEach(function(f) {
+      var wrap = document.getElementById(f.wrapId);
+      if (wrap) wrap.classList.remove('is-blurred');
+    });
+  };
+})();
+
+// ── Privacy blur on window lose focus ──
+var appEl = document.querySelector('.app');
+
+function hasData() {
+  return ['enc-keyword','enc-text','dec-keyword','dec-text'].some(function(id) {
+    var el = document.getElementById(id);
+    return el && el.value.trim().length > 0;
+  });
+}
+
+function blurApp() {
+  if (hasData()) appEl.classList.add('app-blurred');
+}
+
+function unblurApp() {
+  appEl.classList.remove('app-blurred');
+}
+
+window.addEventListener('blur', blurApp);
+window.addEventListener('focus', function() {
+  unblurApp();
+  checkTimerOnResume();
+});
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    blurApp();
+  } else {
+    unblurApp();
+    checkTimerOnResume();
+  }
+});
+
+// Tap anywhere on overlay to unblur
+document.querySelector('.blur-overlay').addEventListener('click', unblurApp);
+
+// ── Spy movie title decrypt animation ──
+window.addEventListener('load', function() {
+  var TITLE = "Brian's Cipher Generator v1.0";
+  var CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&';
+  var el = document.getElementById('cipher-title');
+  if (!el) return;
+
+  // Build a span for each character
+  el.innerHTML = '';
+  var chars = TITLE.split('').map(function(ch) {
+    var s = document.createElement('span');
+    s.style.display = 'inline';
+    s.textContent = ch === ' ' ? ' ' : '?';
+    s.style.color = ch === ' ' ? '' : 'var(--text-muted)';
+    el.appendChild(s);
+    return { span: s, original: ch, isSpace: ch === ' ' };
+  });
+
+  function randomChar() {
+    return CHARS[Math.floor(Math.random() * CHARS.length)];
+  }
+
+  var stagger = 75;
+  var scrambleDuration = 400;
+  var flickerInterval = 55;
+  var holdScrambled = 1000; // pause while fully scrambled before unscrambling
+
+  // Start with real text shown
+  chars.forEach(function(c) {
+    c.span.textContent = c.isSpace ? ' ' : c.original;
+    c.span.style.color = 'var(--text)';
+  });
+
+  function runCycle() {
+    var nonSpace = [];
+    for (var i = 0; i < chars.length; i++) {
+      if (!chars[i].isSpace) nonSpace.push(i);
+    }
+
+    // Track when scramble phase finishes (last char finishes scrambling)
+    var lastScrambleEnd = (nonSpace.length - 1) * stagger + scrambleDuration;
+
+    // Phase 1: scramble left to right
+    nonSpace.forEach(function(charIdx, order) {
+      var c = chars[charIdx];
+      var delay = order * stagger;
+      var start = null;
+
+      setTimeout(function() {
+        c.span.style.color = 'var(--accent)';
+        var iv = setInterval(function() {
+          if (!start) start = Date.now();
+          var elapsed = Date.now() - start;
+          if (elapsed >= scrambleDuration) {
+            clearInterval(iv);
+            // Lock to a random char — stay scrambled until phase 2
+            c.span.textContent = randomChar();
+            c.span.style.color = 'var(--accent)';
+          } else {
+            c.span.textContent = randomChar();
+          }
+        }, flickerInterval);
+      }, delay);
+    });
+
+    // Phase 2: unscramble right to left (after hold)
+    var unscrambleStart = lastScrambleEnd + holdScrambled;
+    var reversed = nonSpace.slice().reverse();
+
+    reversed.forEach(function(charIdx, order) {
+      var c = chars[charIdx];
+      var delay = unscrambleStart + order * stagger;
+      var start = null;
+
+      setTimeout(function() {
+        c.span.style.color = 'var(--accent-bright)';
+        var iv = setInterval(function() {
+          if (!start) start = Date.now();
+          var elapsed = Date.now() - start;
+          if (elapsed >= scrambleDuration) {
+            clearInterval(iv);
+            c.span.textContent = c.original;
+            c.span.style.color = 'var(--text)';
+          } else {
+            c.span.textContent = randomChar();
+          }
+        }, flickerInterval);
+      }, delay);
+    });
+  }
+
+  // Wait 1.5s then start, repeat every 7s
+  setTimeout(function() {
+    runCycle();
+    setInterval(runCycle, 13500);
+  }, 5000);
+});
+</script>
+</body>
+</html>
